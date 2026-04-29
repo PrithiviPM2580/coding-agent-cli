@@ -5,6 +5,7 @@
     "": {
       "name": "coding-agent-cli",
       "dependencies": {
+        "@langchain/core": "^1.1.42",
         "@langchain/openai": "^1.4.5",
         "zod": "^4.3.6",
       },
