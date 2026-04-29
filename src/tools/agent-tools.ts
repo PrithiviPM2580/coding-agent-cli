@@ -1,4 +1,9 @@
-import { readFileToolSchema, type ReadFileToolType } from "@/validators/tools";
+import {
+  readFileToolSchema,
+  writeFileToolSchema,
+  type ReadFileToolType,
+  type WriteFileToolType,
+} from "@/validators/tools";
 import { StructuredTool } from "@langchain/core/tools";
 import { safeReadFile } from "@/safety";
 
@@ -16,6 +21,17 @@ export class ReadFileTool extends StructuredTool {
       return `Error reading file: ${result.error}`;
     }
     return result.content || "";
+  }
+}
+
+export class WriteFileTool extends StructuredTool {
+  name: "write_file";
+  description: "Writes content to a file in the file system.";
+
+  schema: writeFileToolSchema;
+
+  async _call({ path, content }: WriteFileToolType): Promise<string> {
+    const result = await guardedWriteFile(path, content);
   }
 }
 
