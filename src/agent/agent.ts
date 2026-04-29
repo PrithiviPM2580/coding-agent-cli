@@ -1,4 +1,3 @@
-import { ENV } from "@/config/env";
 import { runAgentEnvs } from "@/utils/helper";
 import { ChatOpenAI } from "@langchain/openai";
 
@@ -7,7 +6,7 @@ export async function runAgent(input: string): Promise<string> {
 
   const llm = new ChatOpenAI({
     modelName: modelName,
-    openAIApiKey: apiKey,
+    apiKey: apiKey,
     temperature: 0.7,
     maxTokens: 4096,
     configuration: {
