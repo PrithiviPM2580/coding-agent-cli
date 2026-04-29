@@ -1,4 +1,4 @@
-import type { FileReadResult } from "@/types/tools";
+import type { FileReadResult, FileWriteResult } from "@/types/tools";
 import path from "node:path";
 import * as fs from "fs/promises";
 
@@ -31,6 +31,42 @@ export async function readFile(filePath: string): Promise<FileReadResult> {
         error instanceof Error ? error.message : String(error)
       }`,
       path: filePath,
+    };
+  }
+}
+
+export async function writeFile(
+  filePath: string,
+  content: string,
+): Promise<FileWriteResult> {
+  try {
+    const root = process.cwd();
+    const resolvedPath = path.resolve(root, filePath);
+
+    const relativePath = path.relative(root, resolvedPath);
+    if (relativePath.startsWith("..") || path.isAbsolute(relativePath)) {
+      return {
+        success: false,
+        path: filePath,
+        error:
+          "Access denied: Attempt to write a file outside the project directory.",
+      };
+    }
+
+    await fs.mkdir(path.dirname(resolvedPath), { recursive: true });
+    await fs.writeFile(resolvedPath, content, "utf-8");
+
+    return {
+      success: true,
+      path: filePath,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      path: filePath,
+      error: `Error writing file: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
     };
   }
 }
