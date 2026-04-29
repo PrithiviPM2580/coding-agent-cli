@@ -1,7 +1,8 @@
-import { readFile } from "@/tools/file-system";
+import { readFile, writeFile } from "@/tools/file-system";
 import type { Operation, SafetyContext } from "@/types/safety";
 import path from "node:path";
 import fs from "fs/promises";
+import { getGlobalSettings } from "@/config/singleton";
 
 const DEFAULT_CONTEXT: SafetyContext = {
   projectRoot: process.cwd(),
@@ -123,4 +124,62 @@ export async function safeReadFile(
   }
 
   return readFile(filePath);
+}
+
+export async function requestConfirmation(
+  operation: "write" | "delete" | "execute",
+  target: string,
+  details?: string,
+): Promise<{ approved: boolean; rembember?: boolean }> {
+  const settings = getGlobalSettings();
+
+  if (settings) {
+    if (operation === "execute") {
+      if (settings.isCommandAllowed(target)) {
+        return { approved: true };
+      }
+    } else {
+      if (settings.isFileAllowed(target, operation)) {
+        return { approved: true };
+      }
+    }
+  }
+
+  const isInteractive = process.stdin.isTTY;
+
+  if (!isInteractive) {
+    return { approved: false };
+  }
+}
+
+export async function guardedWriteFile(
+  filePath: string,
+  content: string,
+  requireConfirmation?: boolean,
+): Promise<ReturnType<typeof writeFile>> {
+  const validation = await validateFileOperation("write", filePath);
+
+  if (!validation.safe) {
+    return {
+      success: false,
+      path: filePath,
+      error: `Safety violation: ${validation.reason}`,
+    };
+  }
+
+  let needConfirmation = requireConfirmation;
+  if (needConfirmation === undefined) {
+    const settings = getGlobalSettings();
+    const settingsObs = settings?.getSettings();
+    const mode = settingsObs?.prefrences.confirmationMode || "manual";
+    needConfirmation = mode === "manual";
+  }
+
+  if (needConfirmation) {
+    const {} = await requestConfirmation(
+      "write",
+      filePath,
+      `${content.length} bytes`,
+    );
+  }
 }
