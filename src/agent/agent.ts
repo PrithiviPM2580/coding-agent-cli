@@ -1,11 +1,9 @@
 import { ENV } from "@/config/env";
+import { runAgentEnvs } from "@/utils/helper";
 import { ChatOpenAI } from "@langchain/openai";
 
 export async function runAgent(input: string): Promise<string> {
-  const apiKey = ENV.OPENROUTER_API_KEY;
-  const modelName = ENV.MODEL_NAME;
-  const baseURL = ENV.BASE_URL;
-  const appURL = ENV.APP_URL;
+  const { modelName, apiKey, baseURL, appURL } = runAgentEnvs();
 
   const llm = new ChatOpenAI({
     modelName: modelName,
